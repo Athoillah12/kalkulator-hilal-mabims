@@ -130,12 +130,14 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
             ast_moon = aceh_location.at(t_sunset).observe(moon).apparent()
             ast_sun = aceh_location.at(t_sunset).observe(sun).apparent()
 
-            # Refraksi atmosfer standar (15°C, 1010 mbar)
+            # 1. Tinggi Hilal Mar'i (Toposentrik Berrefraksi Standar: 15°C, 1010 mbar)
             alt_moon, az_moon, _ = ast_moon.altaz(temperature_C=15.0, pressure_mbar=1010.0)
             tinggi_hilal = alt_moon.degrees
+
+            # 2. Elongasi Toposentrik (Jarak Sudut Toposentrik antara Pusat Bulan & Matahari)
             elongasi = ast_moon.separation_from(ast_sun).degrees
 
-            # Evaluasi Kriteria MABIMS
+            # Evaluasi Kriteria MABIMS (Tinggi >= 3.0° dan Elongasi >= 6.4°)
             is_mabims = (tinggi_hilal >= 3.0) and (elongasi >= 6.4)
 
             # Output UI Streamlit
@@ -145,8 +147,8 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("📌 Waktu Ijtima' (WIB)", dt_ijtima_wib.strftime("%Y-%m-%d %H:%M:%S"))
             col2.metric("🌅 Sunset Rukyat Aceh", dt_sunset_wib.strftime("%Y-%m-%d %H:%M:%S"))
-            col3.metric("📐 Tinggi Hilal", f"{tinggi_hilal:.2f}°")
-            col4.metric("↔️ Elongasi", f"{elongasi:.2f}°")
+            col3.metric("📐 Tinggi Hilal (Berrefraksi)", f"{tinggi_hilal:.2f}°")
+            col4.metric("↔️ Elongasi (Toposentrik)", f"{elongasi:.2f}°")
 
             nama_bulan_saja = bulan_hijriah_pilihan.split('. ')[1]
 
