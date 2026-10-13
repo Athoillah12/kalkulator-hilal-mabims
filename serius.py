@@ -51,15 +51,12 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
         # -------------------------------------------------------------
         # KONVERSI HIJRIAH KE MASEHI UNTUK MENENTUKAN RENTANG PENCARIAN
         # -------------------------------------------------------------
-        # Menggunakan tanggal 15 bulan sebelumnya agar aman dari batas umur bulan (29/30 hari)
         bulan_prev_h = 12 if idx_bulan_hijriah == 1 else idx_bulan_hijriah - 1
         tahun_prev_h = tahun_hijriah - 1 if idx_bulan_hijriah == 1 else tahun_hijriah
         
-        # Konversi tgl 15 bulan sebelum Hijriah ke Masehi sebagai awal rentang
         greg_approx = Hijri(tahun_prev_h, bulan_prev_h, 15).to_gregorian()
         
         t0 = ts.utc(greg_approx.year, greg_approx.month, greg_approx.day)
-        # Rentang pencarian ijtima' selama 30 hari ke depan
         dt_t1 = datetime.datetime(greg_approx.year, greg_approx.month, greg_approx.day) + datetime.timedelta(days=30)
         t1 = ts.utc(dt_t1.year, dt_t1.month, dt_t1.day)
 
@@ -74,11 +71,9 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
         if t_ijtima is None:
             st.error("Ijtima' tidak ditemukan pada rentang bulan ini.")
         else:
-            # Waktu Ijtima' dalam WIB (UTC+7)
             dt_ijtima_utc = t_ijtima.utc_datetime()
             dt_ijtima_wib = dt_ijtima_utc + datetime.timedelta(hours=7)
 
-            # Hitung Sunset perkiraan pada hari terjadinya ijtima'
             t_start_ij = ts.utc(dt_ijtima_utc.year, dt_ijtima_utc.month, dt_ijtima_utc.day, 0, 0)
             t_end_ij = ts.utc(dt_ijtima_utc.year, dt_ijtima_utc.month, dt_ijtima_utc.day, 23, 59)
             
@@ -96,7 +91,6 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
             else:
                 dt_sunset_ij_wib = dt_ijtima_wib
 
-            # LOGIKA KETENTUAN KHUSUS:
             if (dt_ijtima_wib.time() > dt_sunset_ij_wib.time()) and (dt_ijtima_wib.date() == dt_sunset_ij_wib.date()):
                 dt_rukyat_date = dt_ijtima_wib.date() + datetime.timedelta(days=1)
                 catatan_rukyat = f"⚠ Ijtima' penentuan awal {bulan_hijriah_pilihan.split('. ')[1]} {tahun_hijriah} H terjadi setelah sunset. Observasi rukyat dilakukan keesokan harinya."
@@ -125,19 +119,26 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
             dt_sunset_wib = t_sunset.utc_datetime() + datetime.timedelta(hours=7)
 
             # -------------------------------------------------------------
-            # LANGKAH 3: Ambil Tinggi Hilal & Elongasi pada Saat Sunset
+            # LANGKAH 3: Ambil Posisi Berrefraksi & Hitung Elongasi Berbasis Alt-Az
             # -------------------------------------------------------------
             ast_moon = aceh_location.at(t_sunset).observe(moon).apparent()
             ast_sun = aceh_location.at(t_sunset).observe(sun).apparent()
 
-            # 1. Tinggi Hilal Mar'i (Toposentrik Berrefraksi Standar: 15°C, 1010 mbar)
+            # Kalkulasi alt-azimuth dengan refraksi atmosfer standar (15°C, 1010 mbar)
             alt_moon, az_moon, _ = ast_moon.altaz(temperature_C=15.0, pressure_mbar=1010.0)
+            alt_sun, az_sun, _ = ast_sun.altaz(temperature_C=15.0, pressure_mbar=1010.0)
+
             tinggi_hilal = alt_moon.degrees
 
-            # 2. Elongasi Toposentrik (Jarak Sudut Toposentrik antara Pusat Bulan & Matahari)
-            elongasi = ast_moon.separation_from(ast_sun).degrees
+            # Menghitung elongasi terkoreksi refraksi menggunakan jarak sudut bola langit (spherical law of cosines / alt-az separation)
+            import numpy as np
+            el_rad = np.arccos(
+                np.sin(alt_moon.radians) * np.sin(alt_sun.radians) +
+                np.cos(alt_moon.radians) * np.cos(alt_sun.radians) * np.cos(az_moon.radians - az_sun.radians)
+            )
+            elongasi = np.degrees(el_rad)
 
-            # Evaluasi Kriteria MABIMS (Tinggi >= 3.0° dan Elongasi >= 6.4°)
+            # Evaluasi Kriteria MABIMS
             is_mabims = (tinggi_hilal >= 3.0) and (elongasi >= 6.4)
 
             # Output UI Streamlit
@@ -147,8 +148,8 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("📌 Waktu Ijtima' (WIB)", dt_ijtima_wib.strftime("%Y-%m-%d %H:%M:%S"))
             col2.metric("🌅 Sunset Rukyat Aceh", dt_sunset_wib.strftime("%Y-%m-%d %H:%M:%S"))
-            col3.metric("📐 Tinggi Hilal (Berrefraksi)", f"{tinggi_hilal:.2f}°")
-            col4.metric("↔️ Elongasi (Toposentrik)", f"{elongasi:.2f}°")
+            col3.metric("📐 Tinggi Hilal", f"{tinggi_hilal:.2f}°")
+            col4.metric("↔️ Elongasi (Refraksi)", f"{elongasi:.2f}°")
 
             nama_bulan_saja = bulan_hijriah_pilihan.split('. ')[1]
 
