@@ -12,9 +12,9 @@ from hijri_converter import Hijri
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-st.set_page_config(page_title="Otomatisasi Perhitungan Hilal MABIMS - Aceh", layout="wide")
+st.set_page_config(page_title="Evaluasi Hilal MABIMS - Aceh", layout="wide")
 
-st.title("🌙 Perhitungan Hilal MABIMS Otomatis (Engine Skyfield)")
+st.title("🌙 Evaluasi Hilal MABIMS Otomatis (Engine Skyfield)")
 st.caption("Lokasi Pengamatan: Banda Aceh (5.5483° N, 95.3238° E)")
 
 # Load Data Ephemeris NASA (DE421)
@@ -141,15 +141,14 @@ if st.sidebar.button("Hitung Hilal Otomatis"):
             # Evaluasi Kriteria MABIMS
             is_mabims = (tinggi_hilal >= 3.0) and (elongasi >= 6.4)
 
-            # Output UI Streamlit
+            # Output UI Streamlit (Tersusun ke bawah secara vertikal)
             st.markdown("---")
             st.info(catatan_rukyat)
 
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("📌 Waktu Ijtima' (WIB)", dt_ijtima_wib.strftime("%Y-%m-%d %H:%M:%S"))
-            col2.metric("🌅 Sunset Rukyat Aceh", dt_sunset_wib.strftime("%Y-%m-%d %H:%M:%S"))
-            col3.metric("📐 Tinggi Hilal", f"{tinggi_hilal:.2f}°")
-            col4.metric("↔️ Elongasi (Refraksi)", f"{elongasi:.2f}°")
+            st.metric("📌 Waktu Ijtima' (WIB)", dt_ijtima_wib.strftime("%Y-%m-%d %H:%M:%S"))
+            st.metric("🌅 Sunset Rukyat Aceh", dt_sunset_wib.strftime("%Y-%m-%d %H:%M:%S"))
+            st.metric("📐 Tinggi Hilal", f"{tinggi_hilal:.2f}°")
+            st.metric("↔️ Elongasi (Refraksi)", f"{elongasi:.2f}°")
 
             nama_bulan_saja = bulan_hijriah_pilihan.split('. ')[1]
 
