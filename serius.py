@@ -12,9 +12,9 @@ from hijri_converter import Hijri
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-st.set_page_config(page_title="Evaluasi Hilal MABIMS - Aceh", layout="wide")
+st.set_page_config(page_title="Perhitungan Hilal MABIMS - Aceh", layout="wide")
 
-st.title("🌙 Evaluasi Hilal MABIMS Otomatis (Engine Skyfield)")
+st.title("🌙 Perhitungan Hilal MABIMS Otomatis (Engine Skyfield)")
 st.caption("Lokasi Pengamatan: Banda Aceh (5.5483° N, 95.3238° E)")
 
 # Load Data Ephemeris NASA (DE421)
